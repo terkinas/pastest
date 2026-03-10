@@ -205,15 +205,22 @@ export default function Home() {
           SECTION 2 — FULL-SCREEN VIDEO (hero/sound design)
       ══════════════════════════════════════════ */}
       <section id="sound" className="relative w-full h-screen overflow-hidden">
-        {/*
-          ── REPLACE THIS BLOCK with your video: ──
-          <video
-            src="/videos/hero.mp4"
-            autoPlay muted loop playsInline
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        */}
-        <VideoPlaceholder label="Sound Design / Hero Video" />
+        <video
+          src="/videos/video1.mp4"
+          loop
+          controls
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+
+        {/*  <video
+          src="/videos/video1.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        /> */}
+        {/* <VideoPlaceholder label="Sound Design / Hero Video" /> */}
         {/* Dark overlay so any overlaid text stays readable */}
         <div className="absolute inset-0 bg-black/40 pointer-events-none" />
       </section>
