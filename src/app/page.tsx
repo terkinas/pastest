@@ -5,6 +5,9 @@ import TEXTURE_ITEMS from "@/data/textureItems";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import SpineObject from "@/components/SpineObject";
+
+import MediaPlayer from "@/components/AudioPlayer";
 
 // ─────────────────────────────────────────────
 //  EDIT THESE to populate your content
@@ -226,9 +229,9 @@ export default function Home() {
       ══════════════════════════════════════════ */}
       <section
         id="music"
-        className="w-full bg-black px-4 md:px-16 py-16 flex flex-col gap-10"
+        className="w-full bg-black px-4 md:px-16 py-16 flex bg-green-500  gap-10"
       >
-        {SOUNDCLOUD_EMBEDS.map((embed, i) => (
+        {/* {SOUNDCLOUD_EMBEDS.map((embed, i) => (
           <div key={i} className="w-full">
             <iframe
               title={embed.label}
@@ -239,7 +242,8 @@ export default function Home() {
               className="w-full border-0 block"
             />
           </div>
-        ))}
+        ))} */}
+        <MediaPlayer />
       </section>
 
       {/* ══════════════════════════════════════════
@@ -389,7 +393,7 @@ function FloatingLink({
 /** Replace with your Three.js canvas / Spline scene / etc. */
 function ThreeDPlaceholder() {
   return (
-    <div className="w-full h-full flex items-center justify-center border border-dashed border-white/20 rounded-full text-white/20 text-xs text-center select-none">
+    <div className="relative w-full h-full flex justify-start items-end  border border-dashed border-white/20 rounded-full text-white/20 text-xs text-center select-none">
       {/*
         e.g.
         <Canvas camera={{ position: [0, 0, 5] }}>
@@ -398,7 +402,8 @@ function ThreeDPlaceholder() {
           <OrbitControls enableZoom={false} />
         </Canvas>
       */}
-      <span className="pointer-events-none">3D Object</span>
+      <span className=" pointer-events-none"></span>
+      <SpineObject />
     </div>
   );
 }

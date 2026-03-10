@@ -37,6 +37,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <script
+        type="module"
+        src="https://unpkg.com/@splinetool/viewer@1.9.3/build/spline-viewer.js"
+        async
+      ></script>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} ${poppins.variable} antialiased`}
       >
