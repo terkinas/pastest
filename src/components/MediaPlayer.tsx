@@ -274,14 +274,33 @@ export default function MediaPlayer(): JSX.Element {
   const waveform = waveforms[track.id] ?? [];
 
   // ─── Load waveform whenever the active track changes ──────────────────
+  // useEffect(() => {
+  //   if (waveforms[track.id]) return; // already decoded
+  //   setWaveformLoading(true);
+  //   extractWaveform(track.src)
+  //     .then((data) => setWaveforms((prev) => ({ ...prev, [track.id]: data })))
+  //     .catch((err) => console.error("Waveform extraction failed:", err))
+  //     .finally(() => setWaveformLoading(false));
+  // }, [track.id, track.src]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (waveforms[track.id]) return; // already decoded
-    setWaveformLoading(true);
-    extractWaveform(track.src)
-      .then((data) => setWaveforms((prev) => ({ ...prev, [track.id]: data })))
-      .catch((err) => console.error("Waveform extraction failed:", err))
-      .finally(() => setWaveformLoading(false));
-  }, [track.id, track.src]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Use async function inside effect
+    const loadWaveform = async () => {
+      setWaveformLoading(true); // safe inside async function
+      try {
+        const data = await extractWaveform(track.src);
+        setWaveforms((prev) => ({ ...prev, [track.id]: data }));
+      } catch (err) {
+        console.error("Waveform extraction failed:", err);
+      } finally {
+        setWaveformLoading(false);
+      }
+    };
+
+    loadWaveform();
+  }, [track.id, waveforms]);
 
   const parseDur = (s: string) => {
     const [m, sec] = s.split(":").map(Number);
