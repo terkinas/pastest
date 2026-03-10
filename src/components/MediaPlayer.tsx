@@ -49,9 +49,9 @@ const TRACKS: Track[] = [
     title: "NadeKing Colab",
     artist: "Savened",
     album: "Demo Sessions",
-    duration: "4:11",
+    duration: "2:40",
     waveformSeed: 2,
-    src: "/audio/nadeking-colab.mp3",
+    src: "/songs/song2.mp3",
   },
   {
     id: 3,
@@ -101,7 +101,7 @@ const TRACKS: Track[] = [
 ];
 
 // ─── Waveform extractor (Web Audio API) ───────────────────────────────────────
-const BARS = 120;
+const BARS = 120 * 2;
 
 async function extractWaveform(src: string): Promise<number[]> {
   const response = await fetch(src);
