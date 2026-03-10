@@ -11,22 +11,18 @@ import {
 } from "react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
 interface Track {
   id: number;
   title: string;
   artist: string;
   album: string;
-  /** Format: "m:ss" */
   duration: string;
-  /** Integer seed used to deterministically generate a waveform shape */
   waveformSeed: number;
   src: string;
 }
 
 interface WaveformCanvasProps {
   waveform: number[];
-  /** Playback progress from 0 to 1 */
   progress: number;
   onSeek: (progress: number) => void;
 }
@@ -35,20 +31,18 @@ interface VolumeIconProps {
   muted: boolean;
 }
 
-// Extend CSSProperties to allow CSS custom properties (e.g. --val)
 type CSSWithVars = CSSProperties & Record<`--${string}`, string | number>;
 
-// ─── Demo track data ──────────────────────────────────────────────────────────
-// Replace `src` with real audio paths; waveformSeed drives the visual pattern.
+// ─── Tracks ───────────────────────────────────────────────────────────────────
 const TRACKS: Track[] = [
   {
     id: 1,
-    title: "Destroy",
+    title: "Mano daina",
     artist: "Savened",
     album: "Demo Sessions",
-    duration: "3:42",
+    duration: "11:53",
     waveformSeed: 1,
-    src: "/audio/destroy.mp3",
+    src: "/songs/song1.mp3",
   },
   {
     id: 2,
@@ -106,15 +100,14 @@ const TRACKS: Track[] = [
   },
 ];
 
-// ─── Seeded pseudo-random waveform generator ──────────────────────────────────
+// ─── Waveform generator ────────────────────────────────────────────────────────
 function generateWaveform(seed: number, bars = 120): number[] {
   let s = seed * 9301 + 49297;
-  const rand = (): number => {
+  const rand = () => {
     s = (s * 9301 + 49297) % 233280;
     return s / 233280;
   };
   const raw = Array.from({ length: bars }, () => 0.15 + rand() * 0.85);
-  // Smooth pass
   return raw.map((v, i) => {
     const l = raw[i - 1] ?? v;
     const r = raw[i + 1] ?? v;
@@ -122,32 +115,28 @@ function generateWaveform(seed: number, bars = 120): number[] {
   });
 }
 
-// ─── SVG Icons ────────────────────────────────────────────────────────────────
-const PlayIcon = (): JSX.Element => (
+// ─── Icons ───────────────────────────────────────────────────────────────────
+const PlayIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
     <path d="M8 5v14l11-7z" />
   </svg>
 );
-
-const PauseIcon = (): JSX.Element => (
+const PauseIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
     <path d="M6 19h4V5H6zm8-14v14h4V5z" />
   </svg>
 );
-
-const PrevIcon = (): JSX.Element => (
+const PrevIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
     <path d="M6 6h2v12H6zm3.5 6 8.5 6V6z" />
   </svg>
 );
-
-const NextIcon = (): JSX.Element => (
+const NextIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
     <path d="M6 18l8.5-6L6 6v12zm2.5-6 6-4.35V16.35L8.5 12zM16 6h2v12h-2z" />
   </svg>
 );
-
-const VolumeIcon = ({ muted }: VolumeIconProps): JSX.Element => (
+const VolumeIcon = ({ muted }: VolumeIconProps) => (
   <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
     {muted ? (
       <path d="M16.5 12A4.5 4.5 0 0 0 14 7.97v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3 3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4 9.91 6.09 12 8.18V4z" />
@@ -158,15 +147,11 @@ const VolumeIcon = ({ muted }: VolumeIconProps): JSX.Element => (
 );
 
 // ─── Waveform Canvas ──────────────────────────────────────────────────────────
-function WaveformCanvas({
-  waveform,
-  progress,
-  onSeek,
-}: WaveformCanvasProps): JSX.Element {
+function WaveformCanvas({ waveform, progress, onSeek }: WaveformCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hoverX, setHoverX] = useState<number | null>(null);
 
-  const draw = useCallback((): void => {
+  const draw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -201,15 +186,11 @@ function WaveformCanvas({
     });
   }, [waveform, progress, hoverX]);
 
-  useEffect(() => {
-    draw();
-  }, [draw]);
+  useEffect(() => draw(), [draw]);
 
-  // Resize observer — keeps canvas pixel-sharp at any container width
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ro = new ResizeObserver(() => {
       canvas.width = canvas.offsetWidth * window.devicePixelRatio;
       canvas.height = canvas.offsetHeight * window.devicePixelRatio;
@@ -217,12 +198,11 @@ function WaveformCanvas({
       if (ctx) ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
       draw();
     });
-
     ro.observe(canvas);
     return () => ro.disconnect();
   }, [draw]);
 
-  const getRelX = (e: MouseEvent<HTMLCanvasElement>): number => {
+  const getRelX = (e: MouseEvent<HTMLCanvasElement>) => {
     const rect = canvasRef.current!.getBoundingClientRect();
     return (e.clientX - rect.left) / rect.width;
   };
@@ -243,87 +223,87 @@ function WaveformCanvas({
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// ─── MediaPlayer ─────────────────────────────────────────────────────────────
 export default function MediaPlayer(): JSX.Element {
   const [activeId, setActiveId] = useState<number>(TRACKS[0].id);
   const [playing, setPlaying] = useState<boolean>(false);
-  const [progress, setProgress] = useState<number>(0); // 0–1
+  const [progress, setProgress] = useState<number>(0);
   const [volume, setVolume] = useState<number>(0.8);
   const [muted, setMuted] = useState<boolean>(false);
-  const [elapsed, setElapsed] = useState<number>(0); // seconds (simulated)
+  const [elapsed, setElapsed] = useState<number>(0);
 
-  // audioRef is available for wiring up real <audio> playback
   const audioRef = useRef<HTMLAudioElement>(null);
-  const rafRef = useRef<number>(0);
-  const startRef = useRef<number | null>(null); // DOMHighResTimeStamp when play began
-  const baseRef = useRef<number>(0); // progress snapshot at last play start
-
   const track = TRACKS.find((t) => t.id === activeId) ?? TRACKS[0];
   const waveform = generateWaveform(track.waveformSeed);
 
-  const parseDur = (s: string): number => {
+  const parseDur = (s: string) => {
     const [m, sec] = s.split(":").map(Number);
     return m * 60 + sec;
   };
-  const fmtTime = (s: number): string =>
+  const fmtTime = (s: number) =>
     `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
-
   const totalSec = parseDur(track.duration);
 
-  // ── RAF-based progress simulation ──────────────────────────────────────────
-  // Replace with real <audio> onTimeUpdate / ontimeupdate events when you have
-  // actual audio files. The rest of the UI stays the same.
-  const tick = useCallback(
-    (now: DOMHighResTimeStamp): void => {
-      if (startRef.current === null) return;
-      const delta = (now - startRef.current) / 1000;
-      const newProg = Math.min(baseRef.current + delta / totalSec, 1);
-      setProgress(newProg);
-      setElapsed(newProg * totalSec);
-      if (newProg < 1) rafRef.current = requestAnimationFrame(tick);
-      else setPlaying(false);
-    },
-    [totalSec]
-  );
-
+  // ─── Play/pause effect ─────────────────────────────────────────────
   useEffect(() => {
-    if (playing) {
-      startRef.current = performance.now();
-      baseRef.current = progress;
-      rafRef.current = requestAnimationFrame(tick);
-    } else {
-      cancelAnimationFrame(rafRef.current);
-      startRef.current = null;
-    }
-    return () => cancelAnimationFrame(rafRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playing, tick]);
+    const audio = audioRef.current;
+    if (!audio) return;
 
-  // ── Handlers ───────────────────────────────────────────────────────────────
-  const selectTrack = (id: number): void => {
-    cancelAnimationFrame(rafRef.current);
-    startRef.current = null;
+    audio.volume = muted ? 0 : volume;
+
+    if (playing) {
+      audio.play().catch((err) => console.error("Audio play failed:", err));
+    } else {
+      audio.pause();
+    }
+  }, [playing, volume, muted]);
+
+  // ─── Sync progress with audio element ─────────────────────────────
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const onTimeUpdate = () => {
+      setProgress(audio.currentTime / audio.duration);
+      setElapsed(audio.currentTime);
+    };
+
+    audio.addEventListener("timeupdate", onTimeUpdate);
+    return () => audio.removeEventListener("timeupdate", onTimeUpdate);
+  }, [track.src]);
+
+  // ─── Handlers ─────────────────────────────────────────────────
+  const selectTrack = (id: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const newTrack = TRACKS.find((t) => t.id === id);
+    if (!newTrack) return;
+
     setActiveId(id);
+    audio.src = newTrack.src;
+    audio.currentTime = 0;
     setProgress(0);
     setElapsed(0);
     setPlaying(true);
   };
 
-  const togglePlay = (): void => setPlaying((p) => !p);
+  const togglePlay = () => setPlaying((p) => !p);
 
-  const seek = (pct: number): void => {
-    baseRef.current = pct;
-    startRef.current = playing ? performance.now() : null;
+  const seek = (pct: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.currentTime = pct * audio.duration;
     setProgress(pct);
     setElapsed(pct * totalSec);
   };
 
-  const prev = (): void => {
+  const prev = () => {
     const idx = TRACKS.findIndex((t) => t.id === activeId);
     selectTrack(TRACKS[(idx - 1 + TRACKS.length) % TRACKS.length].id);
   };
-
-  const next = (): void => {
+  const next = () => {
     const idx = TRACKS.findIndex((t) => t.id === activeId);
     selectTrack(TRACKS[(idx + 1) % TRACKS.length].id);
   };
