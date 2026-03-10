@@ -405,7 +405,7 @@ export default function MediaPlayer(): JSX.Element {
 
         .mp-card {
           width: 100%;
-          max-width: 780px;
+          max-width: 1280px;
           background: var(--surface);
           border: 1px solid var(--border);
           border-radius: var(--radius);

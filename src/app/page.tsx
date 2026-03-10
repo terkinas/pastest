@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useState } from "react";
 import SpineObject from "@/components/SpineObject";
 import MediaPlayer from "@/components/MediaPlayer";
+// import VideoPlayer from "@/components/VideoPlayer";
 
 // ─────────────────────────────────────────────
 //  EDIT THESE to populate your content
@@ -211,6 +212,7 @@ export default function Home() {
           controls
           className="absolute inset-0 w-full h-full object-cover"
         />
+        {/* <VideoPlayer /> */}
 
         {/*  <video
           src="/videos/video1.mp4"
@@ -266,7 +268,13 @@ export default function Home() {
             className="absolute inset-0 w-full h-full object-cover"
           />
         */}
-        <VideoPlaceholder label="Videography Video" />
+        <video
+          src="/videos/video1.mp4"
+          loop
+          controls
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        {/* <VideoPlaceholder label="Videography Video" /> */}
         <div className="absolute inset-0 bg-black/30 pointer-events-none" />
       </section>
 
