@@ -100,19 +100,37 @@ const TRACKS: Track[] = [
   },
 ];
 
-// ─── Waveform generator ────────────────────────────────────────────────────────
-function generateWaveform(seed: number, bars = 120): number[] {
-  let s = seed * 9301 + 49297;
-  const rand = () => {
-    s = (s * 9301 + 49297) % 233280;
-    return s / 233280;
-  };
-  const raw = Array.from({ length: bars }, () => 0.15 + rand() * 0.85);
-  return raw.map((v, i) => {
-    const l = raw[i - 1] ?? v;
-    const r = raw[i + 1] ?? v;
-    return l * 0.25 + v * 0.5 + r * 0.25;
+// ─── Waveform extractor (Web Audio API) ───────────────────────────────────────
+const BARS = 120;
+
+async function extractWaveform(src: string): Promise<number[]> {
+  const response = await fetch(src);
+  const arrayBuf = await response.arrayBuffer();
+  const audioCx = new AudioContext();
+  const decoded = await audioCx.decodeAudioData(arrayBuf);
+  await audioCx.close();
+
+  // Mix all channels down to mono
+  const channels = decoded.numberOfChannels;
+  const length = decoded.length;
+  const mono = new Float32Array(length);
+  for (let c = 0; c < channels; c++) {
+    const data = decoded.getChannelData(c);
+    for (let i = 0; i < length; i++) mono[i] += data[i] / channels;
+  }
+
+  // RMS per bucket → BARS data points
+  const chunkSize = Math.floor(length / BARS);
+  const raw = Array.from({ length: BARS }, (_, b) => {
+    let sum = 0;
+    const start = b * chunkSize;
+    for (let i = start; i < start + chunkSize; i++) sum += mono[i] ** 2;
+    return Math.sqrt(sum / chunkSize);
   });
+
+  // Normalise to [0.08, 1]
+  const max = Math.max(...raw, 1e-6);
+  return raw.map((v) => Math.max(0.08, v / max));
 }
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
@@ -159,6 +177,22 @@ function WaveformCanvas({ waveform, progress, onSeek }: WaveformCanvasProps) {
 
     const { width, height } = canvas;
     ctx.clearRect(0, 0, width, height);
+
+    // Show a flat placeholder while the waveform is loading
+    if (waveform.length === 0) {
+      const gap = 2,
+        barW = (width - gap * (120 - 1)) / 120,
+        mid = height / 2;
+      for (let i = 0; i < 120; i++) {
+        const x = i * (barW + gap),
+          h = (i % 5 === 0 ? 0.12 : 0.07) * height;
+        ctx.fillStyle = "rgba(255,255,255,0.07)";
+        ctx.beginPath();
+        ctx.roundRect(x, mid - h / 2, Math.max(barW, 1), h, 1.5);
+        ctx.fill();
+      }
+      return;
+    }
 
     const bars = waveform.length;
     const gap = 2;
@@ -232,9 +266,22 @@ export default function MediaPlayer(): JSX.Element {
   const [muted, setMuted] = useState<boolean>(false);
   const [elapsed, setElapsed] = useState<number>(0);
 
+  const [waveforms, setWaveforms] = useState<Record<number, number[]>>({});
+  const [waveformLoading, setWaveformLoading] = useState<boolean>(false);
+
   const audioRef = useRef<HTMLAudioElement>(null);
   const track = TRACKS.find((t) => t.id === activeId) ?? TRACKS[0];
-  const waveform = generateWaveform(track.waveformSeed);
+  const waveform = waveforms[track.id] ?? [];
+
+  // ─── Load waveform whenever the active track changes ──────────────────
+  useEffect(() => {
+    if (waveforms[track.id]) return; // already decoded
+    setWaveformLoading(true);
+    extractWaveform(track.src)
+      .then((data) => setWaveforms((prev) => ({ ...prev, [track.id]: data })))
+      .catch((err) => console.error("Waveform extraction failed:", err))
+      .finally(() => setWaveformLoading(false));
+  }, [track.id, track.src]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const parseDur = (s: string) => {
     const [m, sec] = s.split(":").map(Number);
@@ -502,12 +549,41 @@ export default function MediaPlayer(): JSX.Element {
             </div>
 
             <div className="mp-wave-wrap">
+              {waveformLoading && (
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: 10,
+                    color: "rgba(249,115,22,0.7)",
+                    letterSpacing: "0.1em",
+                    gap: 8,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      border: "1.5px solid rgba(249,115,22,0.3)",
+                      borderTopColor: "#f97316",
+                      animation: "spin 0.7s linear infinite",
+                    }}
+                  />
+                  ANALYSING WAVEFORM
+                </div>
+              )}
               <WaveformCanvas
                 waveform={waveform}
                 progress={progress}
                 onSeek={seek}
               />
             </div>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
             <div className="mp-timebar">
               <span>{fmtTime(elapsed)}</span>
