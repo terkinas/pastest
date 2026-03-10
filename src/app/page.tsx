@@ -6,8 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import SpineObject from "@/components/SpineObject";
-
-import MediaPlayer from "@/components/AudioPlayer";
+import MediaPlayer from "@/components/MediaPlayer";
 
 // ─────────────────────────────────────────────
 //  EDIT THESE to populate your content
@@ -227,10 +226,7 @@ export default function Home() {
       {/* ══════════════════════════════════════════
           SECTION 3 — SOUNDCLOUD EMBEDS
       ══════════════════════════════════════════ */}
-      <section
-        id="music"
-        className="w-full bg-black px-4 md:px-16 py-16 flex bg-green-500  gap-10"
-      >
+      <section id="music">
         {/* {SOUNDCLOUD_EMBEDS.map((embed, i) => (
           <div key={i} className="w-full">
             <iframe
